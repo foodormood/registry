@@ -1,0 +1,66 @@
+version: '3.7'
+services:
+  config-server:
+    image: thetinydev/config-server:latest
+    ports:
+      - "8888:8888"
+    networks:
+      - custom_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  registry-server:
+    image: thetinydev/registry:latest
+    environment:
+      - spring.cloud.config.uri=http://config-server:8888
+    ports:
+      - "8761:8761"
+    networks:
+      - custom_network
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 15672:15672
+      - 5672:5672
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+    networks:
+      - custom_network
+  turbine-stream-service:
+    image: thetinydev/turbine-stream-service:latest
+    environment:
+      - spring.cloud.config.uri=http://config-server:8888
+    ports:
+      - "8080:8080"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      registry-server:
+        condition: service_healthy
+    networks:
+      - custom_network
+  monitoring:
+    image: thetinydev/monitoring:latest
+    environment:
+      - spring.cloud.config.uri=http://config-server:8888
+    ports:
+      - "8081:8081"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - custom_network
+networks:
+  custom_network:
