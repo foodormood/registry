@@ -5,12 +5,11 @@ spring:
     name: registry
   cloud:
     config:
-      uri: http://localhost:8888
-      fail-fast: true
+      uri: http://127.0.0.1:8888
+      fail-fast: false
       password: 11223344
-      username: user
-      label: native
-      name: config
+      username: config-server
+      label: main
 
 eureka:
   instance:
